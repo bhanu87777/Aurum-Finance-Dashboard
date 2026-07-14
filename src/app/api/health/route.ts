@@ -6,7 +6,19 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  // Build marker + the connection params actually in effect on this deploy.
+  const marker = "diag-v2-connect-timeout";
+  let resolvedParams: string | null = null;
+  try {
+    const u = new URL(process.env.DATABASE_URL ?? "");
+    u.password = "***";
+    resolvedParams = u.search || "(none)";
+  } catch {
+    resolvedParams = null;
+  }
   const env = {
+    marker,
+    resolvedParams,
     hasDatabaseUrl: !!process.env.DATABASE_URL,
     hasDirectUrl: !!process.env.DIRECT_URL,
     hasAuthSecret: !!process.env.AUTH_SECRET,
