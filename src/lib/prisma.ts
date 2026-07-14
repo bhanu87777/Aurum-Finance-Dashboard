@@ -1,39 +1,35 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
 
-// Reuse a single PrismaClient across hot-reloads in dev to avoid exhausting
-// the PostgreSQL connection pool.
+// Reuse a single PrismaClient across hot-reloads / warm serverless invocations
+// to avoid exhausting the connection pool.
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-// Normalise the connection string so the app is robust to how a hosted
-// Postgres string is pasted in. Neon's default copy includes
-// `channel_binding=require`, which the Prisma query engine can't negotiate on
-// some platforms (surfaces as "Can't reach database server"). We strip it,
-// guarantee TLS, add a generous connect timeout for serverless cold starts,
-// and enable PgBouncer mode on pooled endpoints.
-function resolveDatabaseUrl(): string | undefined {
-  const raw = process.env.DATABASE_URL;
-  if (!raw) return undefined;
-  try {
-    const url = new URL(raw);
-    url.searchParams.delete("channel_binding");
-    if (!url.searchParams.has("sslmode")) url.searchParams.set("sslmode", "require");
-    if (!url.searchParams.has("connect_timeout")) url.searchParams.set("connect_timeout", "15");
-    if (url.hostname.includes("-pooler") && !url.searchParams.has("pgbouncer")) {
-      url.searchParams.set("pgbouncer", "true");
-    }
-    return url.toString();
-  } catch {
-    return raw;
+const logLevels = (
+  process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"]
+) as ("error" | "warn")[];
+
+function createPrisma(): PrismaClient {
+  const url = process.env.DATABASE_URL ?? "";
+
+  // On Neon (serverless Postgres) connect through Neon's serverless driver over
+  // WebSocket. Serverless platforms like Vercel have no IPv6 egress, so a raw
+  // TCP connection to Neon's dual-stack host fails instantly ("Can't reach
+  // database server"). The WebSocket driver sidesteps that entirely.
+  if (url.includes("neon.tech")) {
+    neonConfig.webSocketConstructor = ws;
+    const clean = new URL(url);
+    clean.searchParams.delete("channel_binding"); // engine can't negotiate it
+    const adapter = new PrismaNeon({ connectionString: clean.toString() });
+    return new PrismaClient({ adapter, log: logLevels });
   }
+
+  // Local / non-Neon Postgres: standard TCP connection.
+  return new PrismaClient({ log: logLevels });
 }
 
-const datasourceUrl = resolveDatabaseUrl();
-
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-    ...(datasourceUrl ? { datasources: { db: { url: datasourceUrl } } } : {}),
-  });
+export const prisma = globalForPrisma.prisma ?? createPrisma();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
