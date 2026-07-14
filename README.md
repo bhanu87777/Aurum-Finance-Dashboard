@@ -158,6 +158,40 @@ Then sign in with the demo account: **`demo@aurum.finance` / `demo1234`**.
 
 ---
 
+## ☁️ Deployment (Vercel + Neon)
+
+AURUM deploys for **free** on **Vercel** (app) + **Neon** (serverless PostgreSQL) — no credit card required.
+
+**1. Create a cloud database (Neon)**
+- Sign up at [neon.tech](https://neon.tech) → create a project.
+- Copy two connection strings: the **Pooled** one (host contains `-pooler`) and the **Direct** one.
+
+**2. Seed the cloud database (once, from your machine)**
+```bash
+# temporarily point your local .env at Neon's DIRECT string, then:
+npx prisma db push
+npm run db:seed
+```
+
+**3. Deploy on Vercel**
+- Import the GitHub repo at [vercel.com/new](https://vercel.com/new).
+- Add these **Environment Variables**:
+
+  | Variable | Value |
+  |----------|-------|
+  | `DATABASE_URL` | Neon **pooled** string (`...-pooler...?sslmode=require`) |
+  | `DIRECT_URL` | Neon **direct** string |
+  | `AUTH_SECRET` | `openssl rand -base64 32` |
+  | `NEXTAUTH_SECRET` | same value as `AUTH_SECRET` |
+  | `NEXTAUTH_URL` | your deployed URL, e.g. `https://aurum.vercel.app` |
+  | `ANTHROPIC_API_KEY` *(optional)* | enables the real Claude analyst |
+
+- Click **Deploy**, then sign in with `demo@aurum.finance` / `demo1234`.
+
+> The Prisma schema already exposes `directUrl`, and AI Insights fall back to a deterministic heuristic when no key is set — so the deployed app works out of the box.
+
+---
+
 ## 📁 Project Structure
 
 ```
