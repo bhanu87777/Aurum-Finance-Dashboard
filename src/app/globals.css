@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+/*
+  AURUM design tokens — a committed dark, luxury look.
+  Chart series colors are validated (dataviz six checks) against --surface:
+  worst adjacent CVD ΔE 32.9, all ≥ 3:1 contrast, OKLCH L inside 0.48–0.67.
+*/
+:root {
+  --page: #0a0a0f;
+  --surface: #14141c; /* chart surface (validated against) */
+  --surface-2: #191924;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.12);
+
+  --ink: #f2efe6; /* warm ivory */
+  --ink-secondary: #b8b5aa;
+  --muted: #8a8779;
+
+  /* Brand chrome (UI accents, never data encoding) */
+  --gold: #e2b95b;
+  --gold-deep: #b3882f;
+  --gold-fg: #16130a;
+
+  /* Categorical series — fixed order, never cycled */
+  --viz-1: #b3882f; /* gold   */
+  --viz-2: #1ca57e; /* teal   */
+  --viz-3: #8677e6; /* violet */
+  --viz-4: #d55f88; /* rose   */
+  --viz-5: #3d8ed6; /* sky    */
+  --viz-6: #cf6a2c; /* orange */
+
+  /* Status — reserved, icon + label always accompany */
+  --good: #0ca30c;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
+
+  /* Chart chrome */
+  --grid: #232330;
+  --axis: #34343f;
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-muted: var(--muted);
+  --color-gold: var(--gold);
+  --color-gold-deep: var(--gold-deep);
+  --color-gold-fg: var(--gold-fg);
+  --color-viz-1: var(--viz-1);
+  --color-viz-2: var(--viz-2);
+  --color-viz-3: var(--viz-3);
+  --color-viz-4: var(--viz-4);
+  --color-viz-5: var(--viz-5);
+  --color-viz-6: var(--viz-6);
+  --color-good: var(--good);
+  --color-warning: var(--warning);
+  --color-serious: var(--serious);
+  --color-critical: var(--critical);
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-playfair);
+}
+
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-manrope), system-ui, sans-serif;
+}
+
+/* A faint golden aurora behind everything — depth without noise. */
+.page-glow {
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(226, 185, 91, 0.07), transparent 60%),
+    radial-gradient(900px 500px at -10% 25%, rgba(134, 119, 230, 0.05), transparent 55%),
+    var(--page);
+}
+
+/* Panel: the standard card every chart sits on. */
+.panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
+    var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.panel-hover {
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+.panel-hover:hover {
+  border-color: var(--border-strong);
+}
+
+/* Serif is brand voice only (wordmark, landing hero) — never chart text. */
+.font-display {
+  font-family: var(--font-playfair), Georgia, serif;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(120deg, #f3dc9a 0%, #e2b95b 45%, #c99b3f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn-gold {
+  background: linear-gradient(120deg, #f0d68a, #d9ab45);
+  color: var(--gold-fg);
+  font-weight: 700;
+  transition: filter 160ms ease, transform 160ms ease;
+}
+.btn-gold:hover {
+  filter: brightness(1.07);
+}
+.btn-gold:active {
+  transform: translateY(1px);
+}
+
+.btn-ghost {
+  border: 1px solid var(--border-strong);
+  color: var(--ink-secondary);
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+.btn-ghost:hover {
+  color: var(--ink);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Inputs */
+.input {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 0.625rem;
+  color: var(--ink);
+  padding: 0.625rem 0.875rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.input::placeholder {
+  color: var(--muted);
+}
+.input:focus {
+  border-color: rgba(226, 185, 91, 0.5);
+  box-shadow: 0 0 0 3px rgba(226, 185, 91, 0.12);
+}
+
+/* Tables: numbers align with tabular figures (columns only, per dataviz). */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Thin scrollbars for the dashboard feel */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--axis) transparent;
+}

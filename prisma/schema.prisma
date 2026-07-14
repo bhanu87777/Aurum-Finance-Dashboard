@@ -1,0 +1,133 @@
+// AURUM data model
+// A premium brand's finance office in one place: monthly P&L series,
+// expense composition, product economics, transaction ledger, campaign
+// performance — plus AI-generated insight batches produced by the Claude API.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// The operator (founder / finance lead) who signs in.
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String // bcrypt hash
+  createdAt DateTime @default(now())
+}
+
+// One row per calendar month — the P&L backbone every chart reads.
+model MonthlyFinancial {
+  id                     String   @id @default(cuid())
+  month                  DateTime @unique // first day of the month, UTC
+  revenue                Float
+  expenses               Float // total (operational + nonOperational)
+  operationalExpenses    Float
+  nonOperationalExpenses Float
+}
+
+// Expense composition per month (Salaries, Marketing, ...).
+model ExpenseByCategory {
+  id       String   @id @default(cuid())
+  month    DateTime
+  category String
+  amount   Float
+
+  @@unique([month, category])
+}
+
+// Catalog with unit economics (price vs cost, volume, rating).
+model Product {
+  id           String        @id @default(cuid())
+  name         String
+  category     String
+  price        Float
+  expense      Float // unit cost
+  unitsSold    Int
+  rating       Float
+  transactions Transaction[]
+}
+
+enum TxStatus {
+  COMPLETED
+  PENDING
+  REFUNDED
+}
+
+enum TxMethod {
+  CARD
+  WIRE
+  PAYPAL
+}
+
+model Transaction {
+  id         String   @id @default(cuid())
+  buyer      String
+  email      String
+  amount     Float
+  quantity   Int
+  status     TxStatus @default(COMPLETED)
+  method     TxMethod @default(CARD)
+  occurredAt DateTime
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([occurredAt])
+  @@index([status])
+}
+
+enum CampaignStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+}
+
+// Marketing campaigns measured against a revenue target.
+model Campaign {
+  id                String         @id @default(cuid())
+  name              String
+  channel           String
+  status            CampaignStatus @default(ACTIVE)
+  startedAt         DateTime
+  budget            Float
+  spend             Float
+  targetRevenue     Float
+  attributedRevenue Float
+}
+
+enum InsightSeverity {
+  POSITIVE
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum InsightSource {
+  AI
+  HEURISTIC
+}
+
+// One generation run: an executive summary + a health score + N insight items.
+model InsightBatch {
+  id          String        @id @default(cuid())
+  summary     String        @db.Text
+  healthScore Int // 0–100
+  source      InsightSource
+  createdAt   DateTime      @default(now())
+  items       Insight[]
+}
+
+model Insight {
+  id       String          @id @default(cuid())
+  title    String
+  body     String          @db.Text
+  category String // Revenue | Expenses | Products | Campaigns | Forecast
+  severity InsightSeverity
+  batchId  String
+  batch    InsightBatch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+}

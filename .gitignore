@@ -1,0 +1,36 @@
+# ── dependencies ──
+/node_modules
+/.pnp
+.pnp.*
+
+# ── build output ──
+/.next/
+/out/
+/build
+next-env.d.ts
+tsconfig.tsbuildinfo
+
+# ── secrets & env (commit .env.example instead) ──
+.env
+.env.*
+!.env.example
+
+# ── testing / coverage ──
+/coverage
+
+# ── logs ──
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── deployment ──
+.vercel
+
+# ── editor / OS ──
+.DS_Store
+*.pem
+.idea/
+.vscode/*
+!.vscode/extensions.json
+Thumbs.db
