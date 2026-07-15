@@ -8,6 +8,12 @@
 
 <br/>
 
+### 🔗 See This Project Live
+
+**▶ [https://aurum-finance-dashboard.vercel.app](https://aurum-finance-dashboard.vercel.app)**
+
+<br/>
+
 [![Live Demo](https://img.shields.io/badge/▶_Live_Demo-aurum--finance--dashboard.vercel.app-gold?style=for-the-badge&logo=vercel&logoColor=white)](https://aurum-finance-dashboard.vercel.app)
 
 <br/>
