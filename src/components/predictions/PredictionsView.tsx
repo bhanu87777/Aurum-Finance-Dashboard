@@ -11,17 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import {
-  ChartCard,
-  ChartTooltip,
-  LegendKeys,
-  VIZ,
-  SURFACE,
-  gridProps,
-  axisTick,
-  axisLine,
-  cursorLine,
-} from "@/components/charts/chartKit";
+import { ChartCard, ChartTooltip, LegendKeys, useChartTheme } from "@/components/charts/chartKit";
 import { formatMoneyCompact } from "@/lib/utils";
 import type { RegressionResult } from "@/lib/regression";
 
@@ -30,6 +20,7 @@ const money = (v: number) => formatMoneyCompact(v);
 // Revenue is gold everywhere; the dashed stroke — not a different hue —
 // marks the forecast as a projection. The fit line takes violet.
 export function PredictionsView({ result }: { result: RegressionResult }) {
+  const t = useChartTheme();
   const [showForecast, setShowForecast] = useState(false);
 
   const historyCount = result.points.filter((p) => p.actual !== null).length;
@@ -77,9 +68,9 @@ export function PredictionsView({ result }: { result: RegressionResult }) {
         right={
           <LegendKeys
             items={[
-              { label: "Actual revenue", color: VIZ.gold, shape: "dot" },
-              { label: "Regression fit", color: VIZ.violet },
-              ...(showForecast ? [{ label: "Forecast (95% band)", color: VIZ.gold }] : []),
+              { label: "Actual revenue", color: t.viz.gold, shape: "dot" },
+              { label: "Regression fit", color: t.viz.violet },
+              ...(showForecast ? [{ label: "Forecast (95% band)", color: t.viz.gold }] : []),
             ]}
           />
         }
@@ -87,16 +78,16 @@ export function PredictionsView({ result }: { result: RegressionResult }) {
         <div className="h-[420px]">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 4, left: 8 }}>
-              <CartesianGrid {...gridProps} />
-              <XAxis dataKey="label" tick={axisTick} axisLine={axisLine} tickLine={false} interval="preserveStartEnd" minTickGap={20} />
-              <YAxis tick={axisTick} axisLine={false} tickLine={false} tickFormatter={money} width={56} domain={["auto", "auto"]} />
-              <Tooltip content={<ChartTooltip format={money} />} cursor={cursorLine} />
+              <CartesianGrid {...t.gridProps} />
+              <XAxis dataKey="label" tick={t.axisTick} axisLine={t.axisLine} tickLine={false} interval="preserveStartEnd" minTickGap={20} />
+              <YAxis tick={t.axisTick} axisLine={false} tickLine={false} tickFormatter={money} width={56} domain={["auto", "auto"]} />
+              <Tooltip content={<ChartTooltip format={money} />} cursor={t.cursorLine} />
               {showForecast && (
                 <Area
                   dataKey="band"
                   name="95% interval"
                   stroke="none"
-                  fill={VIZ.gold}
+                  fill={t.viz.gold}
                   fillOpacity={0.1}
                   connectNulls
                   legendType="none"
@@ -107,7 +98,7 @@ export function PredictionsView({ result }: { result: RegressionResult }) {
               <Line
                 type="monotone"
                 dataKey="Regression fit"
-                stroke={VIZ.violet}
+                stroke={t.viz.violet}
                 strokeWidth={2}
                 dot={false}
                 connectNulls={false}
@@ -117,10 +108,10 @@ export function PredictionsView({ result }: { result: RegressionResult }) {
                 <Line
                   type="monotone"
                   dataKey="Forecast"
-                  stroke={VIZ.gold}
+                  stroke={t.viz.gold}
                   strokeWidth={2}
                   strokeDasharray="6 5"
-                  dot={{ r: 3, fill: VIZ.gold, stroke: SURFACE, strokeWidth: 2 }}
+                  dot={{ r: 3, fill: t.viz.gold, stroke: t.surface, strokeWidth: 2 }}
                   connectNulls={false}
                 isAnimationActive={false}
                 />
@@ -128,10 +119,10 @@ export function PredictionsView({ result }: { result: RegressionResult }) {
               <Line
                 type="monotone"
                 dataKey="Actual"
-                stroke={VIZ.gold}
+                stroke={t.viz.gold}
                 strokeWidth={2}
-                dot={{ r: 4, fill: VIZ.gold, stroke: SURFACE, strokeWidth: 2 }}
-                activeDot={{ r: 5, stroke: SURFACE, strokeWidth: 2 }}
+                dot={{ r: 4, fill: t.viz.gold, stroke: t.surface, strokeWidth: 2 }}
+                activeDot={{ r: 5, stroke: t.surface, strokeWidth: 2 }}
                 connectNulls={false}
                 isAnimationActive={false}
               />

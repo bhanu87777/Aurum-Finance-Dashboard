@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
+import { ThemeScript } from "@/components/theme/ThemeScript";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -28,7 +29,11 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${manrope.variable} ${playfair.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <ThemeScript />
+      </head>
       <body className="page-glow min-h-full flex flex-col">
         <Providers>{children}</Providers>
       </body>

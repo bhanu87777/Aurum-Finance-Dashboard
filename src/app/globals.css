@@ -38,6 +38,46 @@
   /* Chart chrome */
   --grid: #232330;
   --axis: #34343f;
+
+  color-scheme: dark;
+}
+
+/*
+  Light theme — same token contract, warm ivory paper instead of near-black.
+  Series colors re-validated (dataviz six checks) against --surface #fffdf8:
+  all ≥ 3:1 contrast, chroma ≥ 0.1, normal-vision ΔE 16.7, CVD ΔE 8.1.
+*/
+html.light {
+  --page: #f7f5ef;
+  --surface: #fffdf8;
+  --surface-2: #f1eee6;
+  --border: rgba(24, 20, 8, 0.08);
+  --border-strong: rgba(24, 20, 8, 0.16);
+
+  --ink: #1b1a14;
+  --ink-secondary: #565348;
+  --muted: #7d7a6d;
+
+  --gold: #a87f24;
+  --gold-deep: #8a6a1e;
+  --gold-fg: #fffdf8;
+
+  --viz-1: #a17300; /* gold   */
+  --viz-2: #0e7d5e; /* teal   */
+  --viz-3: #6353c9; /* violet */
+  --viz-4: #b03a64; /* rose   */
+  --viz-5: #2568a8; /* sky    */
+  --viz-6: #a8511a; /* orange */
+
+  --good: #0a7d0a;
+  --warning: #8a6400;
+  --serious: #b04a24;
+  --critical: #b32626;
+
+  --grid: #e8e4d8;
+  --axis: #cfcaba;
+
+  color-scheme: light;
 }
 
 @theme inline {
@@ -94,6 +134,26 @@ body {
 }
 .panel-hover:hover {
   border-color: var(--border-strong);
+}
+
+/* Light-theme rewrites for chrome that bakes in dark assumptions
+   (white-tinted gradients, heavy black shadows, golden aurora). */
+html.light .page-glow {
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(179, 136, 47, 0.08), transparent 60%),
+    radial-gradient(900px 500px at -10% 25%, rgba(99, 83, 201, 0.05), transparent 55%),
+    var(--page);
+}
+html.light .panel {
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(30, 25, 10, 0.05), 0 8px 24px rgba(30, 25, 10, 0.07);
+}
+html.light .btn-ghost:hover {
+  border-color: rgba(24, 20, 8, 0.28);
+  background: rgba(24, 20, 8, 0.03);
+}
+html.light dialog.dlg::backdrop {
+  background: rgba(30, 25, 10, 0.35);
 }
 
 /* Serif is brand voice only (wordmark, landing hero) — never chart text. */
@@ -156,8 +216,108 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Segmented control active state (range picker, status filter, tabs). */
+.seg-active {
+  background: rgba(226, 185, 91, 0.14);
+  color: var(--gold);
+}
+
+/* Dialog primitives (Modal / Drawer) — native <dialog>, restyled. */
+dialog.dlg {
+  background: transparent;
+  border: none;
+  padding: 0;
+  max-width: none;
+  max-height: none;
+  color: inherit;
+}
+dialog.dlg::backdrop {
+  background: rgba(5, 5, 8, 0.6);
+  backdrop-filter: blur(4px);
+}
+dialog.dlg[open] {
+  animation: dlg-in 160ms ease;
+}
+dialog.dlg-drawer {
+  margin: 0 0 0 auto;
+  height: 100dvh;
+}
+dialog.dlg-top {
+  margin-top: 12vh;
+}
+dialog.dlg-drawer[open] {
+  animation: drawer-in 200ms ease;
+}
+@keyframes dlg-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.toast-in {
+  animation: toast-in 200ms ease;
+}
+
 /* Thin scrollbars for the dashboard feel */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--axis) transparent;
+}
+
+/* Print report sheet — always light, whatever the app theme. */
+.print-sheet {
+  background: #ffffff;
+  color: #1b1a14;
+  min-height: 100vh;
+}
+.print-sheet .print-panel {
+  border: 1px solid #e8e4d8;
+  border-radius: 0.75rem;
+  background: #fffdf8;
+}
+.print-sheet .font-display {
+  color: #1b1a14;
+}
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  body {
+    background: #ffffff !important;
+  }
+  .print-sheet {
+    max-width: none;
+    padding: 0;
+  }
+  .print-sheet .print-panel,
+  .print-sheet section,
+  .print-sheet table {
+    break-inside: avoid;
+  }
 }

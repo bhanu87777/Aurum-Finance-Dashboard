@@ -11,6 +11,10 @@ export function StatusBadge({ status }: { status: string }) {
     REFUNDED: { icon: "↩", cls: "text-critical", label: "Refunded" },
     ACTIVE: { icon: "●", cls: "text-good", label: "Active" },
     PAUSED: { icon: "◷", cls: "text-warning", label: "Paused" },
+    ON_TRACK: { icon: "→", cls: "text-good", label: "On track" },
+    AT_RISK: { icon: "▲", cls: "text-serious", label: "At risk" },
+    ACHIEVED: { icon: "✓", cls: "text-good", label: "Achieved" },
+    EXPIRED: { icon: "◷", cls: "text-muted", label: "Ended" },
   };
   const s = map[status] ?? { icon: "·", cls: "text-muted", label: status };
   return (
@@ -94,7 +98,7 @@ export function TopProducts({ rows }: { rows: ProductRow[] }) {
               <div className="h-1.5 overflow-hidden rounded-full" style={{ background: "rgba(226,185,91,0.14)" }}>
                 <div
                   className="h-full rounded-full"
-                  style={{ width: `${(revenue / maxRevenue) * 100}%`, background: "#b3882f" }}
+                  style={{ width: `${(revenue / maxRevenue) * 100}%`, background: "var(--viz-1)" }}
                 />
               </div>
               <p className="mt-1 text-[11px] text-muted">

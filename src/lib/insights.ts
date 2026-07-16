@@ -9,6 +9,19 @@ const MODEL = process.env.INSIGHTS_MODEL || "claude-sonnet-5";
 // "gemini-flash-latest" always points at the current free-tier flash model.
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
 
+// Free-tier daily quotas are counted PER MODEL, so each entry below is a
+// separate quota bucket. When the preferred model is exhausted (429) or
+// unavailable (404/503), geminiInsights retries the same request on the next
+// one before falling through to the heuristic analyst.
+const GEMINI_MODELS = [
+  ...new Set([
+    GEMINI_MODEL,
+    "gemini-flash-latest",
+    "gemini-flash-lite-latest",
+    "gemini-2.5-flash-lite",
+  ]),
+];
+
 const INSIGHT_CATEGORIES = ["Revenue", "Expenses", "Products", "Campaigns", "Forecast"] as const;
 const INSIGHT_SEVERITIES = ["POSITIVE", "INFO", "WARNING", "CRITICAL"] as const;
 
@@ -326,28 +339,34 @@ async function geminiInsights(s: Snapshot): Promise<InsightPayload | null> {
   };
 
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: analystPrompt(s) }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema,
-            // Generous ceiling: current flash models spend "thinking" tokens
-            // against this budget, so a low cap can truncate the JSON.
-            maxOutputTokens: 8192,
-          },
-        }),
-      },
-    );
-
-    if (!res.ok) {
-      console.error("Gemini insights failed:", res.status, await res.text());
-      return null;
+    // Quota errors are per model — walk the fallback chain before giving up.
+    let res: Response | null = null;
+    for (const candidate of GEMINI_MODELS) {
+      const attempt = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${candidate}:generateContent`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: analystPrompt(s) }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              responseSchema,
+              // Generous ceiling: current flash models spend "thinking" tokens
+              // against this budget, so a low cap can truncate the JSON.
+              maxOutputTokens: 8192,
+            },
+          }),
+        },
+      );
+      if (attempt.ok) {
+        res = attempt;
+        break;
+      }
+      console.error(`Gemini insights failed (${candidate}):`, attempt.status, await attempt.text());
+      if (![429, 404, 503].includes(attempt.status)) return null;
     }
+    if (!res) return null;
 
     const data = await res.json();
     const text: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;

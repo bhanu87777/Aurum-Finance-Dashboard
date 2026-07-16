@@ -31,6 +31,7 @@ export type TransactionRow = {
   status: string;
   method: string;
   occurredAt: string; // ISO
+  productId: string;
   productName: string;
 };
 
@@ -39,6 +40,7 @@ export type CampaignRow = {
   name: string;
   channel: string;
   status: string;
+  startedAt: string; // ISO
   budget: number;
   spend: number;
   targetRevenue: number;
@@ -90,6 +92,7 @@ export async function getRecentTransactions(limit = 12): Promise<TransactionRow[
     status: r.status,
     method: r.method,
     occurredAt: r.occurredAt.toISOString(),
+    productId: r.productId,
     productName: r.product.name,
   }));
 }
@@ -101,6 +104,7 @@ export async function getCampaigns(): Promise<CampaignRow[]> {
     name: r.name,
     channel: r.channel,
     status: r.status,
+    startedAt: r.startedAt.toISOString(),
     budget: r.budget,
     spend: r.spend,
     targetRevenue: r.targetRevenue,

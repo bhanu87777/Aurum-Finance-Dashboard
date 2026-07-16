@@ -28,8 +28,13 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) token.id = (user as { id: string }).id;
+      // Client-side update({ name }) after a profile rename — refresh the
+      // JWT so the new name shows without re-login.
+      if (trigger === "update" && session && typeof session.name === "string") {
+        token.name = session.name;
+      }
       return token;
     },
     async session({ session, token }) {

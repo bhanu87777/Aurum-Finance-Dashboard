@@ -96,9 +96,13 @@
 | 📊 **Dashboard** | KPI tiles with sparklines & vs-previous-period deltas; revenue vs expenses; revenue by month; net-profit trend; operational vs non-operational split; expense-composition donut; product unit-economics scatter (price × cost × volume); campaign target meters; recent orders & top products. One date-range filter (12m / 24m / YTD) scopes **every** panel. |
 | 📈 **Predictions** | Ordinary-least-squares regression implemented **from scratch** — fitted line, R², trend slope, average MoM growth, and a 12-month forecast with a 95% confidence band (±1.96σ of residuals) plus a full forecast table. |
 | 🤖 **AI Insights** | A Claude-powered analyst reads the live books and returns an executive summary and 5–8 concrete, severity-tagged findings — alongside a **deterministic** financial-health score and z-score anomaly detection. Falls back to a transparent heuristic analyst (or Gemini) when no key is set. |
-| 🧾 **Transactions** | Full ledger with debounced search, status filter, pagination, and CSV export — the only client-fetched tab, for instant interactivity. |
-| 🔐 **Auth** | Email/password (bcrypt) via NextAuth (JWT sessions), with sign-up. Every protected route redirects to `/login` without a valid session. |
-| 🎨 **Design** | Chart colors validated for color-vision-deficiency separation (worst adjacent ΔE 32.9, all slots ≥ 3:1). Identity is never color-alone — legends everywhere, status ships icon + label, forecast uses a dashed stroke, not a new hue. |
+| 🧾 **Transactions** | Full ledger with debounced search, status filter, pagination, and CSV export — plus create/edit/delete drawers, an enforced refund workflow (PENDING → COMPLETED → REFUNDED; refunds are final), bulk select/status/delete, and a 4-step **CSV import wizard** (upload → column mapping → validation preview → commit). The dashboard books (`MonthlyFinancial`) are intentionally independent of the ledger — editing transactions never rewrites the P&L. |
+| ◈ **Catalog** | Manage products and campaigns: create/edit/delete with drawer forms, unit-economics columns, ROI per campaign, and server-generated CSV exports. Deleting a product with ledger history requires an explicit cascade confirmation. |
+| ◎ **Budgets & Goals** | Per-category monthly budgets with an inline editor (save on blur), bullet-bar budget-vs-actual chart, month-to-month copy, and financial goals (revenue/profit targets over a month window) with derived progress and on-track/at-risk/achieved states. In-app alerts: a gold badge on the nav item + a dismissible dashboard banner when spend crosses 80% / 100% of budget. |
+| ▤ **Reports** | Period comparison in a delta view — solid current series with the prior period overlaid dashed, KPI tiles with delta chips, and a category-level Δ table. One-click **PDF export** via a print-optimized report route (native browser print — zero PDF dependencies). |
+| 🔐 **Auth & Account** | Email/password (bcrypt) via NextAuth (JWT sessions), with sign-up. Settings page: rename (session refreshes without re-login), password change, theme choice, and data preferences (default range, ledger page size) stored per-user. |
+| ⌨️ **Command palette** | Ctrl/⌘-K fuzzy search across pages, actions, products, and live transaction search — plus `g`-chord navigation (`g d` → dashboard) and a `?` shortcut sheet. Custom-built, no library. |
+| 🎨 **Design** | Dark *and* light themes from one token contract — flip a class and every surface, chart, and status color re-resolves. Both chart palettes validated for color-vision-deficiency separation (dark: worst adjacent ΔE 32.9; light: ΔE 8.1, all slots ≥ 3:1). Identity is never color-alone — legends everywhere, status ships icon + label, forecast uses a dashed stroke, not a new hue. |
 
 ---
 
@@ -241,9 +245,10 @@ Aurum-Finance-Dashboard/
 - [ ] **Multi-tenant workspaces** — multiple brands per account
 - [ ] **Live data ingestion** — connect Stripe / QuickBooks instead of seeded data
 - [ ] **Configurable forecast models** — swap OLS for ARIMA / Prophet, side-by-side
-- [ ] **Export to PDF** — one-click boardroom report from any dashboard view
-- [ ] **Alerting** — email/Slack when an anomaly or campaign miss is detected
-- [ ] **Dark / light theme toggle** and per-user chart preferences
+- [x] **Export to PDF** — print-optimized report route (`/reports/print`)
+- [x] **Alerting** — in-app budget alerts (nav badge + dashboard banner)
+- [x] **Dark / light theme toggle** and per-user preferences
+- [ ] **Email/Slack alert delivery** for anomalies and campaign misses
 - [ ] **Test suite** — unit tests for `regression.ts` + integration tests for API routes
 
 ---

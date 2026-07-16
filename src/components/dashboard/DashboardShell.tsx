@@ -5,6 +5,7 @@ import { StatTile } from "./StatTile";
 import { RevenueExpensesChart, MonthlyRevenueBar, ProfitTrendChart, OpexChart } from "./PnlCharts";
 import { ExpenseDonut, CampaignBoard, ProductScatter } from "./CompositionCharts";
 import { RecentTransactions, TopProducts } from "./Tables";
+import { Segmented } from "@/components/ui/Segmented";
 import { formatMoneyCompact } from "@/lib/utils";
 import type { CampaignRow, CategoryRow, MonthRow, ProductRow, TransactionRow } from "@/lib/finance";
 
@@ -24,14 +25,16 @@ export function DashboardShell({
   products,
   transactions,
   campaigns,
+  initialRange = "12m",
 }: {
   months: MonthRow[];
   categories: CategoryRow[];
   products: ProductRow[];
   transactions: TransactionRow[];
   campaigns: CampaignRow[];
+  initialRange?: RangeKey;
 }) {
-  const [range, setRange] = useState<RangeKey>("12m");
+  const [range, setRange] = useState<RangeKey>(initialRange);
 
   const { scopedMonths, scopedCategories, scopedTransactions, kpis } = useMemo(() => {
     const latest = months.length ? new Date(months[months.length - 1].month) : new Date();
@@ -93,19 +96,7 @@ export function DashboardShell({
             The books at a glance — every panel below is scoped by this range.
           </p>
         </div>
-        <div className="flex rounded-xl border border-border bg-surface p-1">
-          {RANGES.map((r) => (
-            <button
-              key={r.key}
-              onClick={() => setRange(r.key)}
-              className={`rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${
-                range === r.key ? "bg-[rgba(226,185,91,0.14)] text-gold" : "text-ink-secondary hover:text-ink"
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+        <Segmented options={RANGES} value={range} onChange={setRange} size="md" />
       </div>
 
       {/* KPI row */}

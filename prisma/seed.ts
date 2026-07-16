@@ -1,4 +1,4 @@
-import { PrismaClient, TxStatus, TxMethod, CampaignStatus } from "@prisma/client";
+import { PrismaClient, TxStatus, TxMethod, CampaignStatus, GoalMetric } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -16,6 +16,12 @@ const rand = mulberry32(20260710);
 const between = (lo: number, hi: number) => lo + rand() * (hi - lo);
 const pick = <T,>(arr: T[]) => arr[Math.floor(rand() * arr.length)];
 const round2 = (n: number) => Math.round(n * 100) / 100;
+
+// Second, independent stream for data added after the initial launch
+// (budgets). Drawing these from `rand` would reshuffle every dataset
+// generated after the insertion point — keep the original stream intact.
+const rand2 = mulberry32(20260711);
+const between2 = (lo: number, hi: number) => lo + rand2() * (hi - lo);
 
 // ---- Time window: 24 full months ending last month (Jul 2024 – Jun 2026) ----
 const MONTHS: Date[] = [];
@@ -65,6 +71,8 @@ async function main() {
   // Wipe in dependency order so reseeding is idempotent.
   await prisma.insight.deleteMany();
   await prisma.insightBatch.deleteMany();
+  await prisma.budget.deleteMany();
+  await prisma.goal.deleteMany();
   await prisma.transaction.deleteMany();
   await prisma.product.deleteMany();
   await prisma.campaign.deleteMany();
@@ -84,6 +92,7 @@ async function main() {
   // ---- Monthly P&L: compounding growth × seasonality × noise ----
   const BASE_REVENUE = 182_000;
   const GROWTH = 1.028; // ~2.8% MoM
+  const categoryActuals: { month: Date; category: string; amount: number }[] = [];
   for (let i = 0; i < MONTHS.length; i++) {
     const month = MONTHS[i];
     const season = SEASON[month.getUTCMonth()];
@@ -103,10 +112,36 @@ async function main() {
     const jittered = EXPENSE_CATEGORIES.map((c) => ({ name: c.name, w: c.share * between(0.85, 1.15) }));
     const wSum = jittered.reduce((s, c) => s + c.w, 0);
     for (const c of jittered) {
+      const amount = round2((expenses * c.w) / wSum);
       await prisma.expenseByCategory.create({
-        data: { month, category: c.name, amount: round2((expenses * c.w) / wSum) },
+        data: { month, category: c.name, amount },
       });
+      categoryActuals.push({ month, category: c.name, amount });
     }
+  }
+
+  // ---- Budgets: planned spend near actuals, jittered so some months run over ----
+  for (const row of categoryActuals) {
+    await prisma.budget.create({
+      data: {
+        month: row.month,
+        category: row.category,
+        amount: round2(row.amount * between2(0.92, 1.12)),
+      },
+    });
+  }
+
+  // ---- Goals: cumulative targets derived from MonthlyFinancial at read time.
+  // Targets are tuned against the deterministic books so the demo shows one
+  // of each status (evaluated from Jul 2026): ACHIEVED, EXPIRED, ON_TRACK, AT_RISK.
+  const goals: { name: string; metric: GoalMetric; targetValue: number; startMonth: Date; deadline: Date }[] = [
+    { name: "Q4 Gifting Season", metric: "REVENUE", targetValue: 850_000, startMonth: new Date(Date.UTC(2025, 9, 1)), deadline: new Date(Date.UTC(2025, 11, 1)) }, // actual ≈ 881K → ACHIEVED
+    { name: "FY26 Revenue", metric: "REVENUE", targetValue: 4_200_000, startMonth: new Date(Date.UTC(2025, 6, 1)), deadline: new Date(Date.UTC(2026, 5, 1)) }, // ≈ 89% at close → EXPIRED
+    { name: "Calendar 2026 Revenue", metric: "REVENUE", targetValue: 3_500_000, startMonth: new Date(Date.UTC(2026, 0, 1)), deadline: new Date(Date.UTC(2026, 11, 1)) }, // ≈ 60% vs 58% pace → ON_TRACK
+    { name: "Calendar 2026 Profit", metric: "PROFIT", targetValue: 1_400_000, startMonth: new Date(Date.UTC(2026, 0, 1)), deadline: new Date(Date.UTC(2026, 11, 1)) }, // ≈ 48% vs 58% pace → AT_RISK
+  ];
+  for (const g of goals) {
+    await prisma.goal.create({ data: g });
   }
 
   // ---- Products ----
@@ -184,7 +219,10 @@ async function main() {
 
   const fin = await prisma.monthlyFinancial.count();
   const tx = await prisma.transaction.count();
-  console.log(`Seeded: ${fin} months, ${PRODUCTS.length} products, ${tx} transactions, ${campaigns.length} campaigns.`);
+  const budgets = await prisma.budget.count();
+  console.log(
+    `Seeded: ${fin} months, ${PRODUCTS.length} products, ${tx} transactions, ${campaigns.length} campaigns, ${budgets} budgets, ${goals.length} goals.`
+  );
   console.log("Login: demo@aurum.finance / demo1234");
 }
 

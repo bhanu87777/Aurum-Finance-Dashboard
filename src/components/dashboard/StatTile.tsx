@@ -1,10 +1,8 @@
 "use client";
 
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
+import { useChartTheme } from "@/components/charts/chartKit";
 import { formatPercent } from "@/lib/utils";
-
-const SPARK = "#5b584d"; // de-emphasis hue — the accent is the current point
-const ACCENT = "#e2b95b";
 
 // Stat tile per the dataviz contract: label · value · signed delta vs a named
 // period · 12-point sparkline (de-emphasis hue, current period accented).
@@ -23,6 +21,7 @@ export function StatTile({
   upIsGood?: boolean;
   trend?: number[];
 }) {
+  const t = useChartTheme();
   const good = delta !== undefined && (delta >= 0) === upIsGood;
   const spark = (trend ?? []).slice(-12).map((v, i) => ({ i, v }));
   const last = spark.length - 1;
@@ -49,14 +48,14 @@ export function StatTile({
               <Area
                 type="monotone"
                 dataKey="v"
-                stroke={SPARK}
+                stroke={t.spark}
                 strokeWidth={2}
-                fill={SPARK}
+                fill={t.spark}
                 fillOpacity={0.08}
                 isAnimationActive={false}
                 dot={(props: { index?: number; cx?: number; cy?: number }) =>
                   props.index === last ? (
-                    <circle key="last" cx={props.cx} cy={props.cy} r={3.5} fill={ACCENT} stroke="#14141c" strokeWidth={2} />
+                    <circle key="last" cx={props.cx} cy={props.cy} r={3.5} fill={t.accent} stroke={t.surface} strokeWidth={2} />
                   ) : (
                     <g key={props.index} />
                   )

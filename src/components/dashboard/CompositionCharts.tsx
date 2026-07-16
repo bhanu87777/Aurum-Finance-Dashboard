@@ -13,24 +13,17 @@ import {
   ZAxis,
   CartesianGrid,
 } from "recharts";
-import {
-  ChartCard,
-  ChartTooltip,
-  LegendKeys,
-  VIZ,
-  SURFACE,
-  gridProps,
-  axisTick,
-  axisLine,
-} from "@/components/charts/chartKit";
+import { ChartCard, ChartTooltip, LegendKeys, useChartTheme, type ChartTheme } from "@/components/charts/chartKit";
 import { formatMoneyCompact } from "@/lib/utils";
 import type { CategoryRow, ProductRow, CampaignRow } from "@/lib/finance";
 
 // Fixed slot order for expense categories — identity is stable across renders.
 const CATEGORY_ORDER = ["Salaries", "Marketing", "Operations", "Infrastructure", "R&D"];
-const SLOTS = [VIZ.gold, VIZ.teal, VIZ.violet, VIZ.rose, VIZ.sky, VIZ.orange];
+const slots = (t: ChartTheme) => [t.viz.gold, t.viz.teal, t.viz.violet, t.viz.rose, t.viz.sky, t.viz.orange];
 
 export function ExpenseDonut({ categories }: { categories: CategoryRow[] }) {
+  const t = useChartTheme();
+  const SLOTS = slots(t);
   const totals = new Map<string, number>();
   for (const c of categories) totals.set(c.category, (totals.get(c.category) ?? 0) + c.amount);
   const data = CATEGORY_ORDER.filter((c) => totals.has(c)).map((c) => ({
@@ -55,7 +48,7 @@ export function ExpenseDonut({ categories }: { categories: CategoryRow[] }) {
               nameKey="name"
               innerRadius="62%"
               outerRadius="88%"
-              stroke={SURFACE}
+              stroke={t.surface}
               strokeWidth={2}
               paddingAngle={1}
               isAnimationActive={false}
@@ -95,12 +88,13 @@ export function CampaignBoard({ campaigns }: { campaigns: CampaignRow[] }) {
                   {formatMoneyCompact(c.targetRevenue)}
                 </p>
               </div>
+              {/* HTML meter (not SVG) — CSS variables resolve here, so it themes itself. */}
               <div className="h-2 overflow-hidden rounded-full" style={{ background: "rgba(226,185,91,0.14)" }}>
                 <div
                   className="h-full rounded-full"
                   style={{
                     width: `${Math.min(100, pct)}%`,
-                    background: hit ? "linear-gradient(90deg,#f0d68a,#d9ab45)" : "#b3882f",
+                    background: hit ? "linear-gradient(90deg,#f0d68a,#d9ab45)" : "var(--viz-1)",
                   }}
                 />
               </div>
@@ -123,6 +117,8 @@ export function CampaignBoard({ campaigns }: { campaigns: CampaignRow[] }) {
 // Product economics: unit price vs unit cost, bubble size = units sold,
 // color = collection (identity). Diagonal reference: margin widens below it.
 export function ProductScatter({ products }: { products: ProductRow[] }) {
+  const t = useChartTheme();
+  const SLOTS = slots(t);
   const categories = Array.from(new Set(products.map((p) => p.category)));
   const byCat = categories.map((cat, i) => ({
     cat,
@@ -141,13 +137,13 @@ export function ProductScatter({ products }: { products: ProductRow[] }) {
       <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 8, right: 12, bottom: 4, left: 4 }}>
-            <CartesianGrid {...gridProps} />
+            <CartesianGrid {...t.gridProps} />
             <XAxis
               type="number"
               dataKey="x"
               name="Price"
-              tick={axisTick}
-              axisLine={axisLine}
+              tick={t.axisTick}
+              axisLine={t.axisLine}
               tickLine={false}
               tickFormatter={(v: number) => formatMoneyCompact(v)}
               domain={[0, "dataMax"]}
@@ -156,7 +152,7 @@ export function ProductScatter({ products }: { products: ProductRow[] }) {
               type="number"
               dataKey="y"
               name="Unit cost"
-              tick={axisTick}
+              tick={t.axisTick}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v: number) => formatMoneyCompact(v)}
@@ -170,17 +166,17 @@ export function ProductScatter({ products }: { products: ProductRow[] }) {
                 return (
                   <div
                     style={{
-                      background: "#191924",
-                      border: "1px solid rgba(255,255,255,0.12)",
+                      background: t.tooltipBg,
+                      border: `1px solid ${t.tooltipBorder}`,
                       borderRadius: 10,
                       padding: "10px 12px",
                     }}
                   >
-                    <p style={{ color: "#f2efe6", fontSize: 13, fontWeight: 700 }}>{p.name}</p>
-                    <p style={{ color: "#b8b5aa", fontSize: 12, marginTop: 4 }}>
+                    <p style={{ color: t.ink, fontSize: 13, fontWeight: 700 }}>{p.name}</p>
+                    <p style={{ color: t.inkSecondary, fontSize: 12, marginTop: 4 }}>
                       Price {formatMoneyCompact(p.x)} · Cost {formatMoneyCompact(p.y)}
                     </p>
-                    <p style={{ color: "#b8b5aa", fontSize: 12 }}>
+                    <p style={{ color: t.inkSecondary, fontSize: 12 }}>
                       Margin {(((p.x - p.y) / p.x) * 100).toFixed(0)}% · {p.z.toLocaleString()} units
                     </p>
                   </div>
@@ -188,7 +184,7 @@ export function ProductScatter({ products }: { products: ProductRow[] }) {
               }}
             />
             {byCat.map((c) => (
-              <Scatter key={c.cat} name={c.cat} data={c.rows} fill={c.color} fillOpacity={0.85} stroke={SURFACE} strokeWidth={2} isAnimationActive={false} />
+              <Scatter key={c.cat} name={c.cat} data={c.rows} fill={c.color} fillOpacity={0.85} stroke={t.surface} strokeWidth={2} isAnimationActive={false} />
             ))}
           </ScatterChart>
         </ResponsiveContainer>

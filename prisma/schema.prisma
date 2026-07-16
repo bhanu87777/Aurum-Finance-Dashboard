@@ -18,11 +18,13 @@ datasource db {
 
 // The operator (founder / finance lead) who signs in.
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String // bcrypt hash
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String?
+  password    String // bcrypt hash
+  createdAt   DateTime @default(now())
+  // { theme?: "dark" | "light", defaultRange?: "12m" | "24m" | "ytd", ledgerPageSize?: number }
+  preferences Json     @default("{}")
 }
 
 // One row per calendar month — the P&L backbone every chart reads.
@@ -57,6 +59,34 @@ model Product {
   transactions Transaction[]
 }
 
+// Planned spend per expense category per month — compared against
+// ExpenseByCategory actuals. Same month convention (first day, UTC).
+model Budget {
+  id       String   @id @default(cuid())
+  month    DateTime
+  category String
+  amount   Float
+
+  @@unique([month, category])
+}
+
+enum GoalMetric {
+  REVENUE
+  PROFIT
+}
+
+// A cumulative financial target over an inclusive month window.
+// Progress is derived from MonthlyFinancial at read time — never stored.
+model Goal {
+  id          String     @id @default(cuid())
+  name        String
+  metric      GoalMetric
+  targetValue Float
+  startMonth  DateTime // inclusive, first day of month, UTC
+  deadline    DateTime // inclusive, first day of month, UTC
+  createdAt   DateTime   @default(now())
+}
+
 enum TxStatus {
   COMPLETED
   PENDING
@@ -69,6 +99,9 @@ enum TxMethod {
   PAYPAL
 }
 
+// The order ledger. Intentionally independent of MonthlyFinancial /
+// ExpenseByCategory (the authoritative "books") — editing transactions
+// does not recompute the P&L aggregates.
 model Transaction {
   id         String   @id @default(cuid())
   buyer      String
