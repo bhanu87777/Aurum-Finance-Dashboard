@@ -34,3 +34,6 @@ yarn-error.log*
 .vscode/*
 !.vscode/extensions.json
 Thumbs.db
+
+.vercel
+.env*
